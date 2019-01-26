@@ -2,7 +2,7 @@
 
 set -e
 
-BASEDIR=$(dirname "$0")
+BASEDIR="${BASEDIR:-https://raw.githubusercontent.com/eparis/ssh-bastion/master/deploy}"
 
 clean_up () {
     ARG=$?
