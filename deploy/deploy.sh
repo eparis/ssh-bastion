@@ -47,11 +47,14 @@ Subsystem	sftp	/usr/libexec/openssh/sftp-server
 }
 
 oc apply -f ${BASEDIR}/namespace.yaml
+oc apply -f ${BASEDIR}/service.yaml
 oc get -n openshift-ssh-bastion secret ssh-host-keys &>/dev/null || create_host_keys
 oc apply -f ${BASEDIR}/serviceaccount.yaml 
 oc apply -f ${BASEDIR}/role.yaml 
 oc apply -f ${BASEDIR}/rolebinding.yaml 
 oc apply -f ${BASEDIR}/clusterrole.yaml
 oc apply -f ${BASEDIR}/clusterrolebinding.yaml
-oc apply -f ${BASEDIR}/service.yaml 
 oc apply -f ${BASEDIR}/deployment.yaml
+
+echo "The bastion address is $(oc get service -n openshift-ssh-bastion ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
+echo "You may want to use https://raw.githubusercontent.com/eparis/ssh-bastion/master/ssh.sh to easily ssh through the bastion to specific nodes."
