@@ -56,5 +56,16 @@ oc apply -f ${BASEDIR}/clusterrole.yaml
 oc apply -f ${BASEDIR}/clusterrolebinding.yaml
 oc apply -f ${BASEDIR}/deployment.yaml
 
-echo "The bastion address is $(oc get service -n openshift-ssh-bastion ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
+retry=120
+while [ $retry -ge 0 ]
+do
+    retry=$(($retry-1))
+    bastion_host=$(oc get service -n openshift-ssh-bastion ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    if [ -z ${bastion_host} ]; then
+        sleep 1
+    else
+        break
+    fi
+done
+echo "The bastion address is ${bastion_host}"
 echo "You may want to use https://raw.githubusercontent.com/eparis/ssh-bastion/master/ssh.sh to easily ssh through the bastion to specific nodes."
