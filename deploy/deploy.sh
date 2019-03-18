@@ -68,4 +68,16 @@ do
     fi
 done
 echo "The bastion address is ${bastion_host}"
+
+echo "Waiting for ${bastion_host}  to show up in DNS"
+retry=120
+while [ $retry -ge 0 ]
+do
+    retry=$(($retry-1))
+    if nslookup "${bastion_host}" > /dev/null ; then
+        break
+    else
+        sleep 2
+    fi
+done
 echo "You may want to use https://raw.githubusercontent.com/eparis/ssh-bastion/master/ssh.sh to easily ssh through the bastion to specific nodes."
