@@ -74,6 +74,9 @@ retry=120
 while [ $retry -ge 0 ]
 do
     retry=$(($retry-1))
+    if ! ((${retry} % 10)); then
+        echo "...Still waiting for DNS..."
+    fi
     if nslookup "${bastion_host}" > /dev/null ; then
         break
     else
