@@ -28,6 +28,8 @@ spec:
         - name: ssh-host-keys
           mountPath: "/etc/ssh/"
           readOnly: true
+        securityContext:
+          privileged: true
       volumes:
       - name: ssh-host-keys
         secret:
