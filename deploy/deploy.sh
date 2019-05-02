@@ -43,12 +43,12 @@ AcceptEnv XMODIFIERS
 Subsystem	sftp	/usr/libexec/openssh/sftp-server
 ' > ${CONFIGFILE}
 
-    oc create -n openshift-ssh-bastion secret generic ssh-host-keys --from-file="ssh_host_rsa_key=${RSATMP},ssh_host_ecdsa_key=${ECDSATMP},ssh_host_ed25519_key=${ED25519TMP},sshd_config=${CONFIGFILE}"
+    oc create -n ssh-bastion secret generic ssh-host-keys --from-file="ssh_host_rsa_key=${RSATMP},ssh_host_ecdsa_key=${ECDSATMP},ssh_host_ed25519_key=${ED25519TMP},sshd_config=${CONFIGFILE}"
 }
 
 oc apply -f ${BASEDIR}/namespace.yaml
 oc apply -f ${BASEDIR}/service.yaml
-oc get -n openshift-ssh-bastion secret ssh-host-keys &>/dev/null || create_host_keys
+oc get -n ssh-bastion secret ssh-host-keys &>/dev/null || create_host_keys
 oc apply -f ${BASEDIR}/serviceaccount.yaml 
 oc apply -f ${BASEDIR}/role.yaml 
 oc apply -f ${BASEDIR}/rolebinding.yaml 
@@ -60,7 +60,7 @@ retry=120
 while [ $retry -ge 0 ]
 do
     retry=$(($retry-1))
-    bastion_host=$(oc get service -n openshift-ssh-bastion ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    bastion_host=$(oc get service -n ssh-bastion ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
     if [ -z ${bastion_host} ]; then
         sleep 1
     else
