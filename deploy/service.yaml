@@ -4,7 +4,6 @@ metadata:
   labels:
     run: ssh-bastion
   name: ssh-bastion
-  namespace: openshift-ssh-bastion
 spec:
   externalTrafficPolicy: Local
   ports:

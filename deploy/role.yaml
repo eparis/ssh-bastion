@@ -2,7 +2,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: ssh-bastion
-  namespace: openshift-ssh-bastion
 rules:
 - apiGroups:
   - security.openshift.io
