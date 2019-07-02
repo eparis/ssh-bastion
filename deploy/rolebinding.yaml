@@ -4,7 +4,6 @@ metadata:
   annotations:
     openshift.io/description: Allows ssh-pod to run as root
   name: ssh-bastion
-  namespace: openshift-ssh-bastion
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role

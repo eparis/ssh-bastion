@@ -2,6 +2,11 @@
 
 set -e
 
+# Configuration via env. variables:
+# Namespace where the bastion should run. The namespace will be created.
+SSH_BASTION_NAMESPACE="${SSH_BASTION_NAMESPACE:-openshift-ssh-bastion}"
+
+# Directory with bastion yaml files. Can be either local directory or http(s) URL.
 BASEDIR="${BASEDIR:-https://raw.githubusercontent.com/eparis/ssh-bastion/master/deploy}"
 
 clean_up () {
@@ -43,24 +48,35 @@ AcceptEnv XMODIFIERS
 Subsystem	sftp	/usr/libexec/openssh/sftp-server
 ' > ${CONFIGFILE}
 
-    oc create -n openshift-ssh-bastion secret generic ssh-host-keys --from-file="ssh_host_rsa_key=${RSATMP},ssh_host_ecdsa_key=${ECDSATMP},ssh_host_ed25519_key=${ED25519TMP},sshd_config=${CONFIGFILE}"
+    oc create -n ${SSH_BASTION_NAMESPACE} secret generic ssh-host-keys --from-file="ssh_host_rsa_key=${RSATMP},ssh_host_ecdsa_key=${ECDSATMP},ssh_host_ed25519_key=${ED25519TMP},sshd_config=${CONFIGFILE}"
 }
 
-oc apply -f ${BASEDIR}/namespace.yaml
-oc apply -f ${BASEDIR}/service.yaml
-oc get -n openshift-ssh-bastion secret ssh-host-keys &>/dev/null || create_host_keys
-oc apply -f ${BASEDIR}/serviceaccount.yaml 
-oc apply -f ${BASEDIR}/role.yaml 
-oc apply -f ${BASEDIR}/rolebinding.yaml 
+# Non-namespaced objects
+oc apply -f - <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${SSH_BASTION_NAMESPACE}
+  labels:
+    openshift.io/run-level: "0"
+EOF
 oc apply -f ${BASEDIR}/clusterrole.yaml
-oc apply -f ${BASEDIR}/clusterrolebinding.yaml
-oc apply -f ${BASEDIR}/deployment.yaml
+# using oc apply to modifty any already existing clusterrolebinding
+oc create clusterrolebinding ssh-bastion --clusterrole=ssh-bastion --user=system:serviceaccount:${SSH_BASTION_NAMESPACE}:ssh-bastion -o yaml --dry-run | oc apply -f -
+
+# Namespaced objects
+oc -n "${SSH_BASTION_NAMESPACE}" apply -f ${BASEDIR}/service.yaml
+oc get -n "${SSH_BASTION_NAMESPACE}" secret ssh-host-keys &>/dev/null || create_host_keys
+oc -n "${SSH_BASTION_NAMESPACE}" apply -f ${BASEDIR}/serviceaccount.yaml
+oc -n "${SSH_BASTION_NAMESPACE}" apply -f ${BASEDIR}/role.yaml
+oc -n "${SSH_BASTION_NAMESPACE}" apply -f ${BASEDIR}/rolebinding.yaml
+oc -n "${SSH_BASTION_NAMESPACE}" apply -f ${BASEDIR}/deployment.yaml
 
 retry=120
 while [ $retry -ge 0 ]
 do
     retry=$(($retry-1))
-    bastion_host=$(oc get service -n openshift-ssh-bastion ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    bastion_host=$(oc get service -n ${SSH_BASTION_NAMESPACE} ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
     if [ -z ${bastion_host} ]; then
         sleep 1
     else
