@@ -77,26 +77,34 @@ while [ $retry -ge 0 ]
 do
     retry=$(($retry-1))
     bastion_host=$(oc get service -n ${SSH_BASTION_NAMESPACE} ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-    if [ -z ${bastion_host} ]; then
-        sleep 1
-    else
+    if [ -n "${bastion_host}" ]; then
         break
     fi
+    bastion_ip=$(oc get service -n ${SSH_BASTION_NAMESPACE} ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    if [ -n "${bastion_ip}" ]; then
+        break
+    fi
+    sleep 1
 done
-echo "The bastion address is ${bastion_host}"
 
-echo "Waiting for ${bastion_host}  to show up in DNS"
-retry=120
-while [ $retry -ge 0 ]
-do
-    retry=$(($retry-1))
-    if ! ((${retry} % 10)); then
-        echo "...Still waiting for DNS..."
-    fi
-    if nslookup "${bastion_host}" > /dev/null ; then
-        break
-    else
-        sleep 2
-    fi
-done
+if [ -n "${bastion_host}" ]; then
+    echo "Waiting for ${bastion_host} to show up in DNS"
+    retry=120
+    while [ $retry -ge 0 ]
+    do
+        retry=$(($retry-1))
+        if ! ((${retry} % 10)); then
+            echo "...Still waiting for DNS..."
+        fi
+        if nslookup "${bastion_host}" > /dev/null ; then
+            break
+        else
+            sleep 2
+        fi
+    done
+else
+    bastion_host="${bastion_ip}"
+fi
+
+echo "The bastion address is ${bastion_host}"
 echo "You may want to use https://raw.githubusercontent.com/eparis/ssh-bastion/master/ssh.sh to easily ssh through the bastion to specific nodes."
