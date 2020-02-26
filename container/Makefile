@@ -1,7 +1,7 @@
 build:
-	docker build . -t quay.io/eparis/ssh
+	docker build . -t quay.io/${USER}/ssh
 
 push: build
-	docker push quay.io/eparis/ssh
+	docker push quay.io/${USER}/ssh
 
 .PHONY: build push
