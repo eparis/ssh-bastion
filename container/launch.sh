@@ -29,4 +29,8 @@ chown "${user}":"${user}" "${keyfile}"
 chmod 600 "${keyfile}"
 sort -u -o "${keyfile}" "${keyfile}"
 
-/usr/sbin/sshd -D
+# forward kubernetes env to ssh sessions (so oc/kubectl works with service account)
+mapfile -t kube_vars < <(env | grep '^KUBERNETES_')
+[ ${#kube_vars[@]} -gt 0 ] && OPTIONS="-o SetEnv '${kube_vars[@]}'"
+
+exec /usr/sbin/sshd -D ${OPTIONS}
