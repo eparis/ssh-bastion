@@ -8,7 +8,7 @@ user=core
 machineconfig=$(oc get node -l 'node-role.kubernetes.io/master' -o json | jq -r '.items[0].metadata.annotations."machineconfiguration.openshift.io/desiredConfig"')
 
 # make sure the user exists
-id -u "${user}" &>/dev/null || useradd ${user}
+id -u "${user}" &>/dev/null || useradd ${user} --groups wheel
 
 # make sure the ssh dir exists
 sshdir="/home/${user}/.ssh"
