@@ -20,6 +20,7 @@ An ssh-bastion pod to make access to openshift clusters easy
     to create the cluster.
 
 1. SSH as the `core` user to/through the bastion.
+    * Use the `-A` option (`ForwardAgent`) for your key to be automatically forwarded to the nodes from the bastion pod.
     * You can use [a helper script][ssh-script] to ssh directly to a node by the node's name (from `oc get node`).
       This script uses ssh authentication forwarding so you can directly hop from the bastion to the cluster nodes.
     > If you need to use a non-default SSH key, you can:
