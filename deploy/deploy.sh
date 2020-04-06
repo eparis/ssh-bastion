@@ -11,10 +11,10 @@ BASEDIR="${BASEDIR:-https://raw.githubusercontent.com/eparis/ssh-bastion/master/
 
 clean_up () {
     ARG=$?
-    rm -f ${RSATMP} ${RSATMP}.pub
-    rm -f ${ECDSATMP} ${ECDSATMP}.pub
-    rm -f ${ED25519TMP} ${ED25519TMP}.pub
-    rm -f ${CONFIGFILE}
+    rm -f "${RSATMP}" "${RSATMP}.pub"
+    rm -f "${ECDSATMP}" "${ECDSATMP}.pub"
+    rm -f "${ED25519TMP}" "${ED25519TMP}.pub"
+    rm -f "${CONFIGFILE}"
     exit $ARG
 }
 trap clean_up EXIT
@@ -46,9 +46,9 @@ AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
 AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
 AcceptEnv XMODIFIERS
 Subsystem	sftp	/usr/libexec/openssh/sftp-server
-' > ${CONFIGFILE}
+' > "${CONFIGFILE}"
 
-    oc create -n ${SSH_BASTION_NAMESPACE} secret generic ssh-host-keys --from-file="ssh_host_rsa_key=${RSATMP},ssh_host_ecdsa_key=${ECDSATMP},ssh_host_ed25519_key=${ED25519TMP},sshd_config=${CONFIGFILE}"
+    oc -n "${SSH_BASTION_NAMESPACE}" create secret generic ssh-host-keys --from-file="ssh_host_rsa_key=${RSATMP},ssh_host_ecdsa_key=${ECDSATMP},ssh_host_ed25519_key=${ED25519TMP},sshd_config=${CONFIGFILE}"
 }
 
 # Non-namespaced objects
@@ -60,27 +60,27 @@ metadata:
   labels:
     openshift.io/run-level: "0"
 EOF
-oc apply -f ${BASEDIR}/clusterrole.yaml
+oc apply -f "${BASEDIR}/clusterrole.yaml"
 # using oc apply to modifty any already existing clusterrolebinding
-oc create clusterrolebinding ssh-bastion --clusterrole=ssh-bastion --user=system:serviceaccount:${SSH_BASTION_NAMESPACE}:ssh-bastion -o yaml --dry-run | oc apply -f -
+oc create clusterrolebinding ssh-bastion --clusterrole=ssh-bastion --user="system:serviceaccount:${SSH_BASTION_NAMESPACE}:ssh-bastion" -o yaml --dry-run | oc apply -f -
 
 # Namespaced objects
-oc -n "${SSH_BASTION_NAMESPACE}" apply -f ${BASEDIR}/service.yaml
-oc get -n "${SSH_BASTION_NAMESPACE}" secret ssh-host-keys &>/dev/null || create_host_keys
-oc -n "${SSH_BASTION_NAMESPACE}" apply -f ${BASEDIR}/serviceaccount.yaml
-oc -n "${SSH_BASTION_NAMESPACE}" apply -f ${BASEDIR}/role.yaml
-oc -n "${SSH_BASTION_NAMESPACE}" apply -f ${BASEDIR}/rolebinding.yaml
-oc -n "${SSH_BASTION_NAMESPACE}" apply -f ${BASEDIR}/deployment.yaml
+oc -n "${SSH_BASTION_NAMESPACE}" apply -f "${BASEDIR}/service.yaml"
+oc -n "${SSH_BASTION_NAMESPACE}" get secret ssh-host-keys &>/dev/null || create_host_keys
+oc -n "${SSH_BASTION_NAMESPACE}" apply -f "${BASEDIR}/serviceaccount.yaml"
+oc -n "${SSH_BASTION_NAMESPACE}" apply -f "${BASEDIR}/role.yaml"
+oc -n "${SSH_BASTION_NAMESPACE}" create rolebinding ssh-bastion --clusterrole=ssh-bastion --user="system:serviceaccount:${SSH_BASTION_NAMESPACE}:ssh-bastion" -o yaml --dry-run | oc apply -f -
+oc -n "${SSH_BASTION_NAMESPACE}" apply -f "${BASEDIR}/deployment.yaml"
 
 retry=120
 while [ $retry -ge 0 ]
 do
-    retry=$(($retry-1))
-    bastion_host=$(oc get service -n ${SSH_BASTION_NAMESPACE} ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    retry=$((retry-1))
+    bastion_host=$(oc get service -n "${SSH_BASTION_NAMESPACE}" ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
     if [ -n "${bastion_host}" ]; then
         break
     fi
-    bastion_ip=$(oc get service -n ${SSH_BASTION_NAMESPACE} ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    bastion_ip=$(oc get service -n "${SSH_BASTION_NAMESPACE}" ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
     if [ -n "${bastion_ip}" ]; then
         break
     fi
@@ -92,8 +92,8 @@ if [ -n "${bastion_host}" ]; then
     retry=120
     while [ $retry -ge 0 ]
     do
-        retry=$(($retry-1))
-        if ! ((${retry} % 10)); then
+        retry=$((retry-1))
+        if ! ((retry % 10)); then
             echo "...Still waiting for DNS..."
         fi
         if nslookup "${bastion_host}" > /dev/null ; then
