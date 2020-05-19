@@ -76,11 +76,11 @@ retry=120
 while [ $retry -ge 0 ]
 do
     retry=$((retry-1))
-    bastion_host=$(oc get service -n "${SSH_BASTION_NAMESPACE}" ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    bastion_host=$(oc get service -n "${SSH_BASTION_NAMESPACE}" ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' || true)
     if [ -n "${bastion_host}" ]; then
         break
     fi
-    bastion_ip=$(oc get service -n "${SSH_BASTION_NAMESPACE}" ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    bastion_ip=$(oc get service -n "${SSH_BASTION_NAMESPACE}" ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].ip}' || true)
     if [ -n "${bastion_ip}" ]; then
         break
     fi
