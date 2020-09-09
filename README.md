@@ -32,7 +32,7 @@ An ssh-bastion pod to make access to openshift clusters easy
     > * Directly add or update the SSH keys in your OCP deployment see [Update SSH Keys][update-ssh-keys].
 1. The bastion address can be found by running:
     ```
-    oc get service -n openshift-ssh-bastion ssh-bastion -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+    oc get service --all-namespaces -l run=ssh-bastion -o go-template='{{ with (index (index .items 0).status.loadBalancer.ingress 0) }}{{ or .hostname .ip }}{{end}}'
     ```
 
 [ssh-script]: https://raw.githubusercontent.com/eparis/ssh-bastion/master/ssh.sh
