@@ -61,15 +61,22 @@ metadata:
     openshift.io/run-level: "0"
 EOF
 oc apply -f "${BASEDIR}/clusterrole.yaml"
+
+# Old versions of oc don't understand --dry-run=client and it is a bool
+dry_run_flag="--dry-run=client"
+if oc create --help | grep "dry-run=false" > /dev/null; then
+    dry_run_flag="--dry-run"
+fi
+
 # using oc apply to modifty any already existing clusterrolebinding
-oc create clusterrolebinding ssh-bastion --clusterrole=ssh-bastion --user="system:serviceaccount:${SSH_BASTION_NAMESPACE}:ssh-bastion" -o yaml --dry-run=client | oc apply -f -
+oc create clusterrolebinding ssh-bastion --clusterrole=ssh-bastion --user="system:serviceaccount:${SSH_BASTION_NAMESPACE}:ssh-bastion" -o yaml ${dry_run_flag} | oc apply -f -
 
 # Namespaced objects
 oc -n "${SSH_BASTION_NAMESPACE}" apply -f "${BASEDIR}/service.yaml"
 oc -n "${SSH_BASTION_NAMESPACE}" get secret ssh-host-keys &>/dev/null || create_host_keys
 oc -n "${SSH_BASTION_NAMESPACE}" apply -f "${BASEDIR}/serviceaccount.yaml"
 oc -n "${SSH_BASTION_NAMESPACE}" apply -f "${BASEDIR}/role.yaml"
-oc -n "${SSH_BASTION_NAMESPACE}" create rolebinding ssh-bastion --clusterrole=ssh-bastion --user="system:serviceaccount:${SSH_BASTION_NAMESPACE}:ssh-bastion" -o yaml --dry-run=client | oc apply -f -
+oc -n "${SSH_BASTION_NAMESPACE}" create rolebinding ssh-bastion --clusterrole=ssh-bastion --user="system:serviceaccount:${SSH_BASTION_NAMESPACE}:ssh-bastion" -o yaml ${dry_run_flag} | oc apply -f -
 oc -n "${SSH_BASTION_NAMESPACE}" apply -f "${BASEDIR}/deployment.yaml"
 
 retry=120
