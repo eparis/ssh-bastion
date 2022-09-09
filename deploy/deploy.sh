@@ -62,7 +62,7 @@ metadata:
     pod-security.kubernetes.io/enforce: privileged
     pod-security.kubernetes.io/audit: privileged
     pod-security.kubernetes.io/warn: privileged
-    security.openshift.io/scc.podSecurityLabelSync: false
+    security.openshift.io/scc.podSecurityLabelSync: 'false'
 EOF
 oc apply -f "${BASEDIR}/clusterrole.yaml"
 
